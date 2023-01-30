@@ -1,0 +1,8 @@
+package utils
+
+const (
+	STRING_FORMAT_DATE_LONG  string = "2006-01-02 15:04:05"
+	STRING_FORMAT_DATE_SHORT string = "2006-01-02"
+	STRING_FORMAT_MONTH_YEAR string = "2006-01"
+	STRING_FORMAT_YEAR       string = "2006"
+)
