@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"futa.express.api.accountant/utils/logs"
+	"github.com/midea-media-llc/mm-go-utilities/logs"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

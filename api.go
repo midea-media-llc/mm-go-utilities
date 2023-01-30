@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"futa.express.api.accountant/utils/logs"
+	"github.com/midea-media-llc/mm-go-utilities/logs"
 )
 
 func GetWithoutJWT(url string, token string) (result string, status int) {

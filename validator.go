@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"futa.express.api.accountant/utils/logs"
 	"github.com/go-playground/validator/v10"
+	"github.com/midea-media-llc/mm-go-utilities/logs"
 )
 
 // ValidationError is implementation of validation error

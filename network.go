@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"futa.express.api.accountant/utils/logs"
+	"github.com/midea-media-llc/mm-go-utilities/logs"
 )
 
 // MakeGetRequest sends http GET request
