@@ -1,3 +1,4 @@
+# Reference https://github.com/github/gitignore/blob/master/Go.gitignore
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -5,11 +6,38 @@
 *.so
 *.dylib
 
-# Test binary, built with `go test -c`
+# Test binary, built with go test -c
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
+vendor/
+### Go Patch ###
+/vendor/
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# OS General
+Thumbs.db
+.DS_Store
+
+# project
+*.cert
+*.key
+*.log
+bin/
+
+# Develop tools
+.vscode/
+.idea/
+*.swp
+
+deploy/mysql/data/
+
+
+/cmd/main/__debug_bin
