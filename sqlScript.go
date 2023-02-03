@@ -126,7 +126,7 @@ func findFieldsUsedIndex(rfType reflect.Type, ignoreFields ...string) []int {
 	numFields := rfType.NumField()
 	for i := 0; i < numFields; i++ {
 		field := rfType.Field(i)
-		if ArrayStringContains(ignoreFields, field.Name) {
+		if ComparableContains(field.Name, ignoreFields...) {
 			continue
 		}
 		result = append(result, i)

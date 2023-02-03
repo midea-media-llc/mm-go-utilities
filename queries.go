@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/midea-media-llc/mm-go-utilities/logs"
 )
 
 const (
@@ -46,12 +44,10 @@ func FindQuery(controller string, action string) string {
 	err := loadXml(&controllers, controller)
 
 	if err != nil {
-		logs.Errorf("[FindQuery]: %s: ", err.Error())
 		return ""
 	}
 
 	if len(controllers.Controllers) < 1 {
-		logs.Errorf("[FindQuery]: Controller Is Empty")
 		return ""
 	}
 
@@ -65,14 +61,12 @@ func FindQuery(controller string, action string) string {
 		}
 	}
 
-	logs.Errorf("[FindQuery]: Action %s not found", action)
 	return ""
 }
 
 func loadXml(result interface{}, controller string) error {
 	path, err := os.Getwd()
 	if err != nil {
-		logs.Errorf("[Load Xml]: %s", err.Error())
 		return err
 	}
 
