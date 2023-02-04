@@ -64,6 +64,16 @@ func FindQuery(controller string, action string) string {
 	return ""
 }
 
+func FindQueryWithinParamAndUser[T any](controller string, action string, queryParam string, user T, replaceUserFunc func(string, T) string) string {
+	result := FindQueryWithinParam(controller, action, queryParam)
+	return replaceUserFunc(result, user)
+}
+
+func FindQueryWithinUser[T any](controller string, action string, user T, replaceUserFunc func(string, T) string) string {
+	result := FindQuery(controller, action)
+	return replaceUserFunc(result, user)
+}
+
 func loadXml(result interface{}, controller string) error {
 	path, err := os.Getwd()
 	if err != nil {
