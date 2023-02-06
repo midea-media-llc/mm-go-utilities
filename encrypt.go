@@ -14,3 +14,17 @@ func Md5Hash(input string) (ouput string) {
 func ByteArrayToBase64(bytes []byte) string {
 	return b64.StdEncoding.EncodeToString(bytes)
 }
+
+func EncodeBase64(s string) string {
+	data := b64.StdEncoding.EncodeToString([]byte(s))
+	return string(data)
+}
+
+func DecodeBase64(s string) (string, error) {
+	data, err := b64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}
