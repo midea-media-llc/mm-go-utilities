@@ -1,6 +1,10 @@
 package utils
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+	"strings"
+)
 
 func ComparableContains[T comparable](finder T, sources ...T) bool {
 	for _, e := range sources {
@@ -20,4 +24,12 @@ func AnyContains[T any](finder T, sources ...T) bool {
 	}
 
 	return false
+}
+
+func StringFormat[T any](source string, params ...T) string {
+	for i, e := range params {
+		source = strings.ReplaceAll(source, fmt.Sprintf("{%d}", i), fmt.Sprintf("%v", e))
+	}
+
+	return source
 }
