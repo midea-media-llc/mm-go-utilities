@@ -2,17 +2,14 @@ package utils
 
 import (
 	"errors"
-	"strings"
 
+	mssql "github.com/denisenkom/go-mssqldb"
 	"google.golang.org/grpc/status"
 )
 
-func HandleErrorMessage(err error) string {
-	return strings.ReplaceAll(strings.Split(err.Error(), ";")[0], "mssql: ", "")
-}
-
-func HandleNewErrorMessage(err error) error {
-	return errors.New(HandleErrorMessage(err))
+func HandleSqlError(err error) error {
+	e := err.(mssql.Error)
+	return errors.New(e.SQLErrorMessage())
 }
 
 func HandleGrpcError(err error) error {
