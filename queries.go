@@ -7,10 +7,8 @@ import (
 	"strings"
 )
 
-const (
-	REMOVE_PATH = "cmd/main"
-	APPEND_PATH = "/"
-)
+var REMOVE_PATHS = []string{"cmd/main", "cmd\\main"}
+var APPEND_PATHS = []string{"/", "\\"}
 
 type XmlNameNode struct {
 	Name string `xml:"name,attr"`
@@ -80,9 +78,11 @@ func loadXml(result interface{}, controller string) error {
 		return err
 	}
 
-	path = strings.ReplaceAll(path, REMOVE_PATH, "") + APPEND_PATH
+	for _, e := range APPEND_PATHS {
+		path = strings.ReplaceAll(path, e, "")
+	}
 
-	filePath := fmt.Sprintf("%sxml/%s.xml", path, controller)
+	filePath := fmt.Sprintf("%s/xml/%s.xml", path, controller)
 	xmlBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
