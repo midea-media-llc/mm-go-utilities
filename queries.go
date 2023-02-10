@@ -78,7 +78,7 @@ func loadXml(result interface{}, controller string) error {
 		return err
 	}
 
-	for _, e := range APPEND_PATHS {
+	for _, e := range REMOVE_PATHS {
 		path = strings.ReplaceAll(path, e, "")
 	}
 
