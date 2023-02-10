@@ -8,7 +8,6 @@ import (
 )
 
 var REMOVE_PATHS = []string{"cmd/main", "cmd\\main"}
-var APPEND_PATHS = []string{"/", "\\"}
 
 type XmlNameNode struct {
 	Name string `xml:"name,attr"`
