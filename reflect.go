@@ -27,14 +27,22 @@ func CloneFields[IN comparable, OUT comparable](input IN, output OUT, ignoreFiel
 				value := reflect.ValueOf(TimeStampToTime((srcFieldValue.Interface()).(timestamppb.Timestamp)))
 				destValue.FieldByName(name).Set(value)
 			case TYPE_TIME_POINTER:
-				value := reflect.ValueOf(TimeStampToTimePointer((srcFieldValue.Elem().Interface()).(*timestamppb.Timestamp)))
-				destValue.FieldByName(name).Set(value)
+				var value *time.Time = nil
+				v := srcFieldValue.Elem()
+				if v.IsValid() {
+					value = TimeStampToTimePointer(v.Interface().(*timestamppb.Timestamp))
+				}
+				destValue.FieldByName(name).Set(reflect.ValueOf(value))
 			case TYPE_TIMESTAMP:
 				value := reflect.ValueOf(TimeToTimeStamp((srcFieldValue.Interface()).(time.Time)))
 				destValue.FieldByName(name).Set(value)
 			case TYPE_TIMESTAMP_POINTER:
-				value := reflect.ValueOf(TimeToTimeStampPointer((srcFieldValue.Elem().Interface()).(*time.Time)))
-				destValue.FieldByName(name).Set(value)
+				var value *timestamppb.Timestamp = nil
+				v := srcFieldValue.Elem()
+				if v.IsValid() {
+					value = TimeToTimeStampPointer(v.Interface().(*time.Time))
+				}
+				destValue.FieldByName(name).Set(reflect.ValueOf(value))
 			case srcField.Type:
 				destValue.FieldByName(name).Set(srcValue.FieldByName(name))
 			}
