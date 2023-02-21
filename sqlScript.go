@@ -383,7 +383,7 @@ func toValueFloat64(value interface{}) string {
 // toValueBool converts the given interface value to a SQL string representation of a boolean type
 func toValueBool(value interface{}) string {
 	// check if the value is true or 'true' or 1 or '1' or float64(1), if so return '1', otherwise return '0'
-	if value == true || value == "true" || value == 1 || value == "1" || (value == float64(1) || value.(float64) == 1) {
+	if value == true || value == "true" || value == 1 || value == "1" || (value == float64(1)) {
 		return "1"
 	}
 	return "0"
