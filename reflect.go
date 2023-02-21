@@ -37,7 +37,8 @@ func CloneFields[IN comparable, OUT comparable](input IN, output OUT, ignoreFiel
 				var value *time.Time = nil
 				v := srcFieldValue.Elem()
 				if v.IsValid() {
-					value = TimeStampToTimePointer(v.Interface().(*timestamppb.Timestamp))
+					i := v.Interface().(timestamppb.Timestamp)
+					value = TimeStampToTimePointer(&i)
 				}
 				destValue.FieldByName(name).Set(reflect.ValueOf(value))
 			case TYPE_TIMESTAMP:
@@ -49,7 +50,8 @@ func CloneFields[IN comparable, OUT comparable](input IN, output OUT, ignoreFiel
 				var value *timestamppb.Timestamp = nil
 				v := srcFieldValue.Elem()
 				if v.IsValid() {
-					value = TimeToTimeStampPointer(v.Interface().(*time.Time))
+					i := v.Interface().(time.Time)
+					value = TimeToTimeStampPointer(&i)
 				}
 				destValue.FieldByName(name).Set(reflect.ValueOf(value))
 			case srcField.Type:
