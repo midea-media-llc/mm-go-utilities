@@ -301,8 +301,10 @@ func toSqlValue(kind reflect.Kind, value interface{}) string {
 		return "null"
 	case reflect.Bool: // if the kind is Bool, convert the value to a SQL string representation of a boolean type
 		return toValueBool(value)
-	case reflect.Int8, reflect.Int16, reflect.Uint8, reflect.Uint16, reflect.Int, reflect.Int32, reflect.Uint32, reflect.Uint: // if the kind is an integer type, convert the value to a SQL string representation of an integer type
+	case reflect.Int8, reflect.Int16, reflect.Uint8, reflect.Uint16: // if the kind is an integer type, convert the value to a SQL string representation of an integer type
 		return toValueInt(value)
+	case reflect.Int32, reflect.Uint32, reflect.Uint:
+		return toValueInt32(value)
 	case reflect.Int64, reflect.Uint64: // if the kind is a 64-bit integer type, convert the value to a SQL string representation of a 64-bit integer type
 		return toValueInt64(value)
 	case reflect.Float32: // if the kind is a 32-bit floating-point type, convert the value to a SQL string representation of a 32-bit floating-point type
