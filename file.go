@@ -14,10 +14,14 @@ type ExportFieldConfig struct {
 	Header string
 }
 
+// WriteArrayToFileXlsx writes the data contained in a slice to an xlsx file.
+// The name of the file and the name of the sheet are specified in the arguments.
+// If headers are specified, they are added as the first row of the sheet.
+// The data is written starting at the second row of the sheet.
+// The data is expected to be a slice of structs.
 func WriteArrayToFileXlsx(value interface{}, fileName *string, sheetName string, headers ...string) error {
 	fileExcel := excelize.NewFile()
 	fileExcel.SetSheetName("Sheet1", sheetName)
-
 	arrs := ToInterfaceSlice(reflect.ValueOf(value))
 
 	countMore := 1
@@ -40,6 +44,11 @@ func WriteArrayToFileXlsx(value interface{}, fileName *string, sheetName string,
 	return fileExcel.SaveAs(*fileName)
 }
 
+// WriteDataIntoFile writes the data contained in a slice of structs to an xlsx file.
+// The headers are specified in the header argument.
+// The data is written starting at the specified startRow and startColumn.
+// The style is used to style the entire range of the data (excluding headers).
+// The handleCellValue function is called for each cell in the data range and should return the cell value.
 func WriteDataIntoFile[T any](header []ExportFieldConfig, f *excelize.File, sheetName string, startRow, startColumn int, data []T, style int, handleCellValue func(string, T, reflect.Value) interface{}) {
 	// render header
 	index := startColumn
@@ -49,8 +58,8 @@ func WriteDataIntoFile[T any](header []ExportFieldConfig, f *excelize.File, shee
 		f.SetCellStyle(sheetName, fmt.Sprintf("%v%d", columnIndex, startRow), fmt.Sprintf("%v%v", columnIndex, len(data)+startRow), style)
 		index++
 	}
-	startRow++
 
+	startRow++
 	// render data
 	for _, item := range data {
 		index = startColumn

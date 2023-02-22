@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"time"
 
+	mssql "github.com/denisenkom/go-mssqldb"
 	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
@@ -18,10 +19,12 @@ var TYPE_TIME reflect.Type = nil
 var TYPE_TIME_POINTER reflect.Type = nil
 var TYPE_TIMESTAMP reflect.Type = nil
 var TYPE_TIMESTAMP_POINTER reflect.Type = nil
+var TYPE_SQL_ERROR reflect.Type = nil
 
 func init() {
 	TYPE_TIME = reflect.TypeOf(time.Time{})
 	TYPE_TIME_POINTER = reflect.TypeOf(&time.Time{})
 	TYPE_TIMESTAMP = reflect.TypeOf(timestamp.Timestamp{})
 	TYPE_TIMESTAMP_POINTER = reflect.TypeOf(&timestamp.Timestamp{})
+	TYPE_SQL_ERROR = reflect.TypeOf(mssql.Error{})
 }

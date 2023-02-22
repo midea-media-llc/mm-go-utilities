@@ -8,49 +8,57 @@ type IListenerV1[P1 any] interface {
 	FindFirstParameter() *P1
 }
 
+// ListenerV1 is a generic event listener for one parameter events.
+// P1 can be any type of parameters
 type ListenerV1[P1 any] struct {
 	events []*func(P1)
 	p1     P1
 }
 
-func NewListenerV1[P1 any](p1 P1) *ListenerV1[P1] {
-	result := &ListenerV1[P1]{}
-	return result
-}
-
-func (this *ListenerV1[P1]) Push(event *func(a P1)) {
+// Push adds an event to the listener.
+func (l *ListenerV1[P1]) Push(event *func(a P1)) {
 	if event == nil {
 		return
 	}
-
-	this.events = append(this.events, event)
+	// Check if the event already exists in the slice.
+	for _, e := range l.events {
+		if e == event {
+			return
+		}
+	}
+	l.events = append(l.events, event)
 }
 
-func (this *ListenerV1[P1]) Pop(event *func(a P1)) {
+// Pop removes an event from the listener.
+func (l *ListenerV1[P1]) Pop(event *func(a P1)) {
 	if event == nil {
 		return
 	}
-
-	for i := 0; i < len(this.events); i++ {
-		item := this.events[i]
-		if item == event {
-			this.removeAt(i)
-			i--
+	// Find the index of the event in the slice.
+	for i, e := range l.events {
+		if e == event {
+			l.removeAt(i)
+			return
 		}
 	}
 }
 
-func (this *ListenerV1[P1]) Invoke(a P1) {
-	for _, e := range this.events {
-		event := *e
+// Invoke calls all the events with the provided parameter.
+func (l *ListenerV1[P1]) Invoke(a P1) {
+	for i := range l.events {
+		event := *l.events[i]
 		event(a)
 	}
 }
 
-func (this *ListenerV1[P1]) FindFirstParameter() *P1 {
-	return &this.p1
+// FindFirstParameter returns a pointer to the first parameter of the listener.
+func (l *ListenerV1[P1]) FindFirstParameter() *P1 {
+	return &l.p1
 }
 
-func (this *ListenerV1[P1]) removeAt(i int) {
-	this.events = append(this.events[:i], this.events[i+1:]...)
+// removeAt removes an event at the specified index from the listener's event queue.
+func (l *ListenerV1[P1]) removeAt(i int) {
+	copy(l.events[i:], l.events[i+1:])
+	l.events[len(l.events)-1] = nil // to avoid a memory leak
+	l.events = l.events[:len(l.events)-1]
 }
