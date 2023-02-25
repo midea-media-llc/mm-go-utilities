@@ -5,7 +5,8 @@ import "reflect"
 type Finalware = func()
 
 type Listener struct {
-	events []func(args ...interface{})
+	events    []func(args ...interface{})
+	isInvoked bool
 }
 
 // NewListenerV1 returns a new instance of ListenerV1 with initial values of p1 and p2.
@@ -37,6 +38,12 @@ func (l *Listener) Pop(event func(args ...interface{})) {
 }
 
 func (l *Listener) Invoke(args ...interface{}) {
+	if l.isInvoked {
+		return
+	}
+
+	l.isInvoked = true
+
 	for _, e := range l.events {
 		event := e
 		event(args...)
@@ -44,7 +51,5 @@ func (l *Listener) Invoke(args ...interface{}) {
 }
 
 func (l *Listener) removeAt(i int) {
-	copy(l.events[i:], l.events[i+1:])
-	l.events[len(l.events)-1] = nil
-	l.events = l.events[:len(l.events)-1]
+	l.events = RemoveAt(l.events, i)
 }

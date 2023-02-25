@@ -6,12 +6,14 @@ type IListenerV3[P1 any, P2 any, P3 any] interface {
 	Push(*func(P1, P2, P3))
 	Pop(*func(P1, P2, P3))
 	Invoke(P1, P2, P3, ...FinalwareV3[P1, P2, P3])
+	InvokeAll(P1, P2, P3, ...Finalware)
 }
 
 // ListenerV3 is a generic type that represents an event listener that accepts two parameters
 // P1 and P2 and P3 can be any type of parameters
 type ListenerV3[P1 any, P2 any, P3 any] struct {
-	events []*func(P1, P2, P3) // a slice of function pointers that can take P1, P2, P3 parameters
+	events    []*func(P1, P2, P3) // a slice of function pointers that can take P1, P2, P3 parameters
+	isInvoked bool
 }
 
 // NewListenerV3 returns a new instance of ListenerV3 with initial values of p1 and p2.
@@ -45,6 +47,12 @@ func (l *ListenerV3[P1, P2, P3]) Pop(event *func(a P1, b P2, c P3)) {
 
 // Invoke calls all the events in the listener's event queue with the given parameters.
 func (l *ListenerV3[P1, P2, P3]) Invoke(a P1, b P2, c P3, wares ...FinalwareV3[P1, P2, P3]) {
+	if l.isInvoked {
+		return
+	}
+
+	l.isInvoked = true
+
 	for _, e := range l.events {
 		event := *e
 		event(a, b, c)
@@ -52,6 +60,24 @@ func (l *ListenerV3[P1, P2, P3]) Invoke(a P1, b P2, c P3, wares ...FinalwareV3[P
 
 	for _, e := range wares {
 		e(a, b, c)
+	}
+}
+
+// Invoke calls all the events with the provided parameter.
+func (l *ListenerV3[P1, P2, P3]) InvokeAll(a P1, b P2, c P3, wares ...Finalware) {
+	if l.isInvoked {
+		return
+	}
+
+	l.isInvoked = true
+
+	for _, e := range l.events {
+		event := *e
+		event(a, b, c)
+	}
+
+	for _, e := range wares {
+		e()
 	}
 }
 
