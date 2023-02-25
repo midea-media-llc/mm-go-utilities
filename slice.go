@@ -140,3 +140,10 @@ func ToInterfaceSlice(s reflect.Value) []interface{} {
 	// Return the slice of interfaces
 	return result
 }
+
+func RemoveAt[T any](sources []T, index int) []T {
+	var def T
+	copy(sources[index:], sources[index+1:])
+	sources[len(sources)-1] = def
+	return sources[:len(sources)-1]
+}

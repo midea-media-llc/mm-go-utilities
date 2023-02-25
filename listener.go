@@ -2,42 +2,49 @@ package utils
 
 import "reflect"
 
+type Finalware = func()
+
 type Listener struct {
 	events []func(args ...interface{})
 }
 
-func (me *Listener) Push(event func(args ...interface{})) {
+// NewListenerV1 returns a new instance of ListenerV1 with initial values of p1 and p2.
+func NewListener() *Listener {
+	return &Listener{}
+}
+
+func (l *Listener) Push(event func(args ...interface{})) {
 	if event == nil {
 		return
 	}
 
-	me.events = append(me.events, event)
+	l.events = append(l.events, event)
 }
 
-func (me *Listener) Pop(event func(args ...interface{})) {
+func (l *Listener) Pop(event func(args ...interface{})) {
 	if event == nil {
 		return
 	}
 
 	eventPtr := reflect.ValueOf(event).Pointer()
-	for i := 0; i < len(me.events); i++ {
-		itemPtr := reflect.ValueOf(me.events[i]).Pointer()
+	for i := 0; i < len(l.events); i++ {
+		itemPtr := reflect.ValueOf(l.events[i]).Pointer()
 		if itemPtr == eventPtr {
-			me.removeAt(i)
+			l.removeAt(i)
 			i--
 		}
 	}
 }
 
-func (me *Listener) Invoke(args ...interface{}) {
-	for _, e := range me.events {
+func (l *Listener) Invoke(args ...interface{}) {
+	for _, e := range l.events {
 		event := e
 		event(args...)
 	}
 }
 
-func (me *Listener) removeAt(i int) {
-	copy(me.events[i:], me.events[i+1:])
-	me.events[len(me.events)-1] = nil
-	me.events = me.events[:len(me.events)-1]
+func (l *Listener) removeAt(i int) {
+	copy(l.events[i:], l.events[i+1:])
+	l.events[len(l.events)-1] = nil
+	l.events = l.events[:len(l.events)-1]
 }

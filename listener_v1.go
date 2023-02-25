@@ -1,18 +1,22 @@
 package utils
 
+type FinalwareV1[P1 any] func(P1)
+
 type IListenerV1[P1 any] interface {
-	Push(event *func(P1))
-	Pop(event *func(P1))
-	New(p1 P1) IListenerV1[P1]
-	Invoke(p1 P1)
-	FindFirstParameter() *P1
+	Push(*func(P1))
+	Pop(*func(P1))
+	Invoke(P1, ...FinalwareV1[P1])
 }
 
 // ListenerV1 is a generic event listener for one parameter events.
 // P1 can be any type of parameters
 type ListenerV1[P1 any] struct {
 	events []*func(P1)
-	p1     P1
+}
+
+// NewListenerV1 returns a new instance of ListenerV1 with initial values of p1 and p2.
+func NewListenerV1[P1 any]() IListenerV1[P1] {
+	return &ListenerV1[P1]{}
 }
 
 // Push adds an event to the listener.
@@ -44,21 +48,18 @@ func (l *ListenerV1[P1]) Pop(event *func(a P1)) {
 }
 
 // Invoke calls all the events with the provided parameter.
-func (l *ListenerV1[P1]) Invoke(a P1) {
+func (l *ListenerV1[P1]) Invoke(a P1, wares ...FinalwareV1[P1]) {
 	for i := range l.events {
 		event := *l.events[i]
 		event(a)
 	}
-}
 
-// FindFirstParameter returns a pointer to the first parameter of the listener.
-func (l *ListenerV1[P1]) FindFirstParameter() *P1 {
-	return &l.p1
+	for _, e := range wares {
+		e(a)
+	}
 }
 
 // removeAt removes an event at the specified index from the listener's event queue.
 func (l *ListenerV1[P1]) removeAt(i int) {
-	copy(l.events[i:], l.events[i+1:])
-	l.events[len(l.events)-1] = nil // to avoid a memory leak
-	l.events = l.events[:len(l.events)-1]
+	l.events = RemoveAt(l.events, i)
 }
