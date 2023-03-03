@@ -20,18 +20,18 @@ import (
 //
 // The `ignoreFields` parameter is an optional list of struct field names to exclude from the generated script.
 func ToSqlScript(value interface{}, tableName string, ignoreFields ...string) string {
-	result := strings.Builder{}
+	result := &strings.Builder{}
 	rfValue, rfType, rfKind := handlePointer(value)
 
 	if rfKind == reflect.Array || rfKind == reflect.Slice {
 		// If `value` is a slice, create a script to declare the table only once
-		result.WriteString(objectToScriptDeclare(rfType.Elem(), tableName, ignoreFields...))
+		objectToScriptDeclare(result, &[]string{}, rfType.Elem(), tableName, ignoreFields...)
 		// Loop through each struct in the slice and create a script to insert its data into the table
-		result.WriteString(arrayToScriptData(ToInterfaceSlice(rfValue), tableName, ignoreFields...))
+		arrayToScriptData(result, ToInterfaceSlice(rfValue), tableName, ignoreFields...)
 	} else {
 		// If `value` is a single struct, create a script to declare the table and insert its data into the table
-		result.WriteString(objectToScriptDeclare(rfType, tableName, ignoreFields...))
-		result.WriteString(objectToScriptData(rfValue, rfType, tableName, ignoreFields...))
+		objectToScriptDeclare(result, &[]string{}, rfType, tableName, ignoreFields...)
+		objectToScriptData(result, &[]string{}, rfValue, rfType, tableName, ignoreFields...)
 	}
 
 	return result.String()
@@ -41,13 +41,13 @@ func ToSqlScript(value interface{}, tableName string, ignoreFields ...string) st
 // It iterates over each field of the struct type and generates a SQL column declaration statement based on the
 // field's name and type. If the field is a slice type, it recursively calls itself to generate column declarations
 // for the slice's element type. Fields can be ignored using the `ignoreFields` parameter.
-func objectToScriptDeclare(elemType reflect.Type, tableName string, ignoreFields ...string) string {
+func objectToScriptDeclare(builder *strings.Builder, fields *[]string, elemType reflect.Type, tableName string, ignoreFields ...string) {
+	write := len(*fields) == 0
+
 	// Create a new strings.Builder to hold the resulting SQL script.
-	result := strings.Builder{}
+	result := &strings.Builder{}
 
 	// Create a slice to hold the SQL column declarations for each field.
-	fields := make([]string, 0)
-
 	// Handle pointer types by dereferencing them.
 	elemType = handleTypePointer(elemType)
 
@@ -61,32 +61,34 @@ func objectToScriptDeclare(elemType reflect.Type, tableName string, ignoreFields
 
 		// If the field is a slice, recursively call this function to generate SQL column declarations for its element type.
 		if field.Type.Kind() == reflect.Slice {
-			result.WriteString(objectToScriptDeclare(field.Type.Elem(), field.Name, ignoreFields...))
+			objectToScriptDeclare(result, &[]string{}, field.Type.Elem(), field.Name, ignoreFields...)
+		} else if isStruct(field.Type) {
+			objectToScriptDeclare(builder, fields, field.Type.Elem(), field.Name, ignoreFields...)
 		} else {
 			// Otherwise, generate a SQL column declaration for the field based on its name and type.
 			fieldDeclaration := fmt.Sprintf("[%s] %s", SafeColumnName(field.Name), findSqlTypeByType(field.Type))
-			fields = append(fields, fieldDeclaration)
+			*fields = append(*fields, fieldDeclaration)
 		}
 	}
 
 	// If there are any fields, generate a SQL declare statement for the table variable using the given tableName parameter.
-	if len(fields) > 0 {
-		result.WriteString(fmt.Sprintf("declare @$%s table (%s)\n", tableName, strings.Join(fields, ",")))
+	if write && len(*fields) > 0 {
+		result.WriteString(fmt.Sprintf("declare @$%s table (%s)\n", tableName, strings.Join(*fields, ",")))
 	}
 
 	// Return the resulting SQL script as a string.
-	return result.String()
+	builder.WriteString(result.String())
 }
 
 // objectToScriptData converts a single struct instance to an SQL insert statement.
 // It takes in the reflect.Value and reflect.Type of the struct instance,
 // the table name, and an optional slice of field names to ignore.
 // It returns the generated SQL insert statement as a string.
-func objectToScriptData(elem reflect.Value, elemType reflect.Type, tableName string, ignoreFields ...string) string {
+func objectToScriptData(builder *strings.Builder, values *[]string, elem reflect.Value, elemType reflect.Type, tableName string, ignoreFields ...string) {
+	write := len(*values) == 0
 	// Create a strings.Builder to store the generated SQL statement.
-	result := strings.Builder{}
+	result := &strings.Builder{}
 	// Create a slice to store the values of each field in the struct instance.
-	values := make([]string, 0)
 
 	// Dereference any pointer type that may be present.
 	elem, elemType = handleValueTypePointer(elem, elemType)
@@ -102,34 +104,38 @@ func objectToScriptData(elem reflect.Value, elemType reflect.Type, tableName str
 
 		// If the field is an array or slice, generate a separate SQL insert statement for each element.
 		if fieldKind == reflect.Array || fieldKind == reflect.Slice {
-			result.WriteString(arrayToScriptData(ToInterfaceSlice(fieldValue), fieldField.Name, ignoreFields...))
+			arrayToScriptData(result, ToInterfaceSlice(fieldValue), fieldField.Name, ignoreFields...)
+		} else if isStruct(fieldField.Type) {
+			objectToScriptData(builder, values, fieldValue.Elem(), fieldValue.Elem().Type(), fieldField.Name, ignoreFields...)
 		} else {
 			// Convert the field value to a SQL string.
-			values = append(values, toSqlValue(fieldKind, fieldValue.Interface()))
+			*values = append(*values, toSqlValue(fieldKind, fieldValue.Interface()))
 		}
 	}
 	// If there are any values to insert, generate the SQL insert statement.
-	if len(values) > 0 {
-		result.WriteString(fmt.Sprintf("insert into @$%s select %s\n", tableName, strings.Join(values, ",")))
+	if write && len(*values) > 0 {
+		result.WriteString(fmt.Sprintf("insert into @$%s select %s\n", tableName, strings.Join(*values, ",")))
 	}
-	return result.String()
+
+	builder.WriteString(result.String())
 }
 
 // arrayToScriptData takes a slice of interface{} values, a table name, and an optional list of field names to ignore.
 // It returns a string containing a SQL script to insert the data into a table.
-func arrayToScriptData(values []interface{}, tableName string, ignoreFields ...string) string {
-	result := strings.Builder{}
+func arrayToScriptData(builder *strings.Builder, values []interface{}, tableName string, ignoreFields ...string) {
+	result := &strings.Builder{}
 
+	datas := make([]string, 0)
 	// Iterate over each value in the slice
 	for _, item := range values {
 		// Get the reflect.Value, reflect.Type, and reflect.Kind of the value using handlePointer
 		value, valueType, _ := handlePointer(item)
 
 		// Call objectToScriptData to convert the value to a SQL script and append the result to the builder
-		result.WriteString(objectToScriptData(value, valueType, tableName, ignoreFields...))
+		objectToScriptData(result, &datas, value, valueType, tableName, ignoreFields...)
 	}
 
-	return result.String()
+	builder.WriteString(result.String())
 }
 
 // handleValueTypePointer checks if the given element type is a pointer type,
@@ -387,4 +393,8 @@ func toValueBool(value interface{}) string {
 		return "1"
 	}
 	return "0"
+}
+
+func isStruct(fieldType reflect.Type) bool {
+	return fieldType.Kind() == reflect.Ptr && !AnyContains(fieldType, TYPE_TIME_POINTER, TYPE_TIMESTAMP_POINTER)
 }
