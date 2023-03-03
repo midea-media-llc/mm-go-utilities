@@ -396,5 +396,13 @@ func toValueBool(value interface{}) string {
 }
 
 func isStruct(fieldType reflect.Type) bool {
-	return fieldType.Kind() == reflect.Ptr && !AnyContains(fieldType, TYPE_TIME_POINTER, TYPE_TIMESTAMP_POINTER)
+	if fieldType.Kind() != reflect.Ptr {
+		return false
+	}
+
+	if fieldType.Elem().Kind() != reflect.Struct {
+		return false
+	}
+
+	return !AnyContains(fieldType, TYPE_TIME_POINTER, TYPE_TIMESTAMP_POINTER)
 }
