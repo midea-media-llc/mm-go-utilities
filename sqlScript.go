@@ -169,6 +169,15 @@ func findFieldsUsedIndex(rfType reflect.Type, ignoreFields ...string) []int {
 	return result
 }
 
+// findFieldsUsedIndex returns the type is struct
+func isStruct(fieldType reflect.Type) bool {
+	if fieldType.Kind() != reflect.Struct {
+		return false
+	}
+
+	return !AnyContains(fieldType, TYPE_TIME, TYPE_TIMESTAMP, TYPE_TIME_POINTER, TYPE_TIMESTAMP_POINTER, TYPE_GUID, TYPE_GUID_POINTER)
+}
+
 // findSqlTypeByType determines the SQL data type that should be used for a given Go data type.
 // It uses reflection to inspect the type of the input and returns the appropriate SQL data type.
 func findSqlTypeByType(modelType reflect.Type) string {
@@ -283,12 +292,4 @@ func toValueFloat64(value reflect.Value) string {
 func toValueBool(value reflect.Value) string {
 	v := value.Interface()
 	return fmt.Sprintf("%v", BoolToInt(v == true || v == "true" || v == 1 || v == "1" || v == float64(1)))
-}
-
-func isStruct(fieldType reflect.Type) bool {
-	if fieldType.Kind() != reflect.Struct {
-		return false
-	}
-
-	return !AnyContains(fieldType, TYPE_TIME, TYPE_TIMESTAMP)
 }
