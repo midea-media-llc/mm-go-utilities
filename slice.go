@@ -117,27 +117,15 @@ func FindLast[T any](sources []T, predicate func(T) bool) T {
 // It iterates through the slice and adds each element to the result slice as an interface{}.
 // If an element is a pointer, it dereferences the pointer and adds the underlying value as an interface{}.
 func ToInterfaceSlice(s reflect.Value) []interface{} {
-	// Create a slice of interfaces with the same length as the input slice
 	result := make([]interface{}, s.Len())
-	// If the input slice is nil, return the empty slice of interfaces
 	if s.IsNil() {
 		return result
 	}
 
-	// Iterate over each element in the input slice
 	for i := 0; i < s.Len(); i++ {
-		// Get the i-th element in the input slice
-		item := s.Index(i)
-		// If the element is a pointer, get the underlying value and convert it to an interface
-		if item.Kind() == reflect.Pointer {
-			result[i] = item.Elem().Interface()
-			// If the element is not a pointer, convert it directly to an interface
-		} else {
-			result[i] = item.Interface()
-		}
+		result[i] = handleValuePointer(s.Index(i)).Interface()
 	}
 
-	// Return the slice of interfaces
 	return result
 }
 

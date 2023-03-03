@@ -19,6 +19,8 @@ var TYPE_TIME reflect.Type = nil
 var TYPE_TIME_POINTER reflect.Type = nil
 var TYPE_TIMESTAMP reflect.Type = nil
 var TYPE_TIMESTAMP_POINTER reflect.Type = nil
+var TYPE_GUID reflect.Type = nil
+var TYPE_GUID_POINTER reflect.Type = nil
 var TYPE_SQL_ERROR reflect.Type = nil
 
 func init() {
@@ -27,4 +29,6 @@ func init() {
 	TYPE_TIMESTAMP = reflect.TypeOf(timestamp.Timestamp{})
 	TYPE_TIMESTAMP_POINTER = reflect.TypeOf(&timestamp.Timestamp{})
 	TYPE_SQL_ERROR = reflect.TypeOf(mssql.Error{})
+	TYPE_GUID = reflect.TypeOf(mssql.UniqueIdentifier{})
+	TYPE_GUID_POINTER = reflect.TypeOf(&mssql.UniqueIdentifier{})
 }
