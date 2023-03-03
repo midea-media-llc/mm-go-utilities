@@ -37,7 +37,5 @@ bin/
 .idea/
 *.swp
 
-deploy/mysql/data/
-
-
-/cmd/main/__debug_bin
+/cmd
+cmd/
