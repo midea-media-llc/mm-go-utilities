@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-
-	"gorm.io/gorm"
 )
 
 var (
@@ -19,45 +17,59 @@ func SetIsDevelopment(isDev bool) {
 	isDevelopment = isDev
 }
 
-func Execute(db *gorm.DB, controller string, action string, claims IClaims, request interface{}, result interface{}) error {
+func Execute(db IGormDB, controller string, action string, claims IClaims, request interface{}, result interface{}) error {
 	queryText := FindQueryWithinParamAndUser(controller, action, ToSqlScript(request, "Model", IGNORE_FIELDS...), claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
 	}
 
 	consoleQuery("Execute", controller, action, queryText)
-	query := db.Raw(queryText).Scan(result)
-	if query.Error != nil {
-		consoleError("Execute", controller, action, queryText, query.Error)
-		return HandleSqlError(query.Error)
+
+	rows, queryError := db.Raw(queryText).Rows()
+	if queryError != nil {
+		consoleError("Execute", controller, action, queryText, queryError)
+		return HandleSqlError(queryError)
 	}
+
+	if err := rows.Scan(result); err != nil {
+		consoleError("Execute", controller, action, queryText, queryError)
+		return HandleSqlError(err)
+	}
+
 	return nil
 }
 
-func ExecuteId(db *gorm.DB, controller string, action string, claims IClaims, id interface{}, result interface{}) error {
+func ExecuteId(db IGormDB, controller string, action string, claims IClaims, id interface{}, result interface{}) error {
 	queryText := FindQueryWithinUser(controller, action, claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
 	}
 
 	consoleQuery("ExecuteId", controller, action, queryText)
-	query := db.Raw(queryText, id).Scan(result)
-	if query.Error != nil {
-		consoleError("ExecuteId", controller, action, queryText, query.Error)
-		return HandleSqlError(query.Error)
+
+	rows, queryError := db.Raw(queryText).Rows()
+	if queryError != nil {
+		consoleError("ExecuteId", controller, action, queryText, queryError)
+		return HandleSqlError(queryError)
 	}
+
+	if err := rows.Scan(result); err != nil {
+		consoleError("ExecuteId", controller, action, queryText, queryError)
+		return HandleSqlError(err)
+	}
+
 	return nil
 }
 
-func ExecuteMultipleResult(db *gorm.DB, controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
+func ExecuteMultipleResult(db IGormDB, controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
 	queryText := FindQueryWithinParamAndUser(controller, action, ToSqlScript(request, "Model", IGNORE_FIELDS...), claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
 	}
 
 	consoleQuery("ExecuteMultipleResult", controller, action, queryText)
-	query := db.Raw(queryText)
-	rows, err := query.Rows()
+
+	rows, err := db.Raw(queryText).Rows()
 	if err != nil {
 		consoleError("ExecuteMultipleResult", controller, action, queryText, err)
 		return HandleSqlError(err)
@@ -68,7 +80,7 @@ func ExecuteMultipleResult(db *gorm.DB, controller string, action string, claims
 		return nil
 	}
 
-	errScan := scanResults(rows, query, results)
+	errScan := scanResults(rows, results)
 	if errScan != nil {
 		consoleError("ExecuteMultipleResult", controller, action, queryText, err)
 	}
@@ -76,18 +88,18 @@ func ExecuteMultipleResult(db *gorm.DB, controller string, action string, claims
 	return errScan
 }
 
-func ExecuteIdMultipleResult(db *gorm.DB, controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
+func ExecuteIdMultipleResult(db IGormDB, controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
 	queryText := FindQueryWithinUser(controller, action, claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
 	}
 
 	consoleQuery("ExecuteIdMultipleResult", controller, action, queryText)
-	query := db.Raw(queryText, request)
-	rows, err := query.Rows()
+
+	rows, err := db.Raw(queryText, request).Rows()
 	if err != nil {
 		consoleError("ExecuteIdMultipleResult", controller, action, queryText, err)
-		return HandleSqlError(query.Error)
+		return HandleSqlError(err)
 	}
 
 	defer rows.Close()
@@ -95,7 +107,7 @@ func ExecuteIdMultipleResult(db *gorm.DB, controller string, action string, clai
 		return nil
 	}
 
-	errScan := scanResults(rows, query, results)
+	errScan := scanResults(rows, results)
 	if errScan != nil {
 		consoleError("ExecuteIdMultipleResult", controller, action, queryText, err)
 	}
@@ -103,19 +115,19 @@ func ExecuteIdMultipleResult(db *gorm.DB, controller string, action string, clai
 	return errScan
 }
 
-func FilterPagination(db *gorm.DB, controller string, action string, claims IClaims, filters interface{}, paging interface{}, total interface{}, items interface{}) error {
-	queryBuilder := strings.Builder{}
-	queryBuilder.WriteString(ToSqlScript(filters, "Filter", IGNORE_FIELDS...))
-	queryBuilder.WriteString("\n")
-	queryBuilder.WriteString(ToSqlScript(paging, "Pagination", IGNORE_FIELDS...))
-	queryText := FindQueryWithinParamAndUser(controller, action, queryBuilder.String(), claims, replaceClaims)
+func FilterPagination(db IGormDB, controller string, action string, claims IClaims, filters interface{}, paging interface{}, total interface{}, items interface{}) error {
+	builder := strings.Builder{}
+	builder.WriteString(ToSqlScript(filters, "Filter", IGNORE_FIELDS...))
+	builder.WriteString("\n")
+	builder.WriteString(ToSqlScript(paging, "Pagination", IGNORE_FIELDS...))
+	queryText := FindQueryWithinParamAndUser(controller, action, builder.String(), claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
 	}
 
 	consoleQuery("FilterPagination", controller, action, queryText)
-	query := db.Raw(queryText)
-	rows, err := query.Rows()
+
+	rows, err := db.Raw(queryText).Rows()
 	if err != nil {
 		consoleError("FilterPagination", controller, action, queryText, err)
 		return HandleSqlError(err)
@@ -126,13 +138,13 @@ func FilterPagination(db *gorm.DB, controller string, action string, claims ICla
 		return nil
 	}
 
-	if err1 := query.ScanRows(rows, total); err1 != nil {
+	if err1 := rows.Scan(rows, total); err1 != nil {
 		consoleError("FilterPagination", controller, action, queryText, err1)
 		return HandleSqlError(err1)
 	}
 
 	if rows.NextResultSet() && rows.Next() {
-		if err2 := query.ScanRows(rows, items); err2 != nil {
+		if err2 := rows.Scan(rows, items); err2 != nil {
 			consoleError("FilterPagination", controller, action, queryText, err2)
 			return HandleSqlError(err2)
 		}
@@ -161,14 +173,14 @@ func replaceClaims(input string, claims IClaims) string {
 	return input
 }
 
-func scanResults(rows *sql.Rows, query *gorm.DB, results []interface{}) error {
+func scanResults(rows *sql.Rows, results []interface{}) error {
 	for i, e := range results {
 		if i != 0 && !rows.Next() {
 			rows.NextResultSet()
 			continue
 		}
 
-		if err1 := query.ScanRows(rows, e); err1 != nil {
+		if err1 := rows.Scan(rows, e); err1 != nil {
 			return HandleSqlError(err1)
 		}
 
