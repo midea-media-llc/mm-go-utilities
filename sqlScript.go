@@ -216,6 +216,10 @@ func toOthersSqlType(modelType reflect.Type) string {
 
 // toSqlValue converts the given interface value to a SQL string representation of the corresponding type.
 func toSqlValue(kind reflect.Kind, value reflect.Value) string {
+	if !value.IsValid() || value.IsZero() {
+		return "null"
+	}
+
 	switch kind {
 	case reflect.Invalid:
 		return "null"
@@ -242,11 +246,6 @@ func toSqlValue(kind reflect.Kind, value reflect.Value) string {
 
 // toValueStruct converts the given interface value to a SQL string representation of a struct type
 func toValueStruct(value reflect.Value) string {
-	value = handleValuePointer(value)
-	if !value.IsValid() || value.IsZero() {
-		return "null"
-	}
-
 	if value.Type() == TYPE_TIME {
 		return fmt.Sprintf("'%s'", Safe((value.Interface().(time.Time)).Format("2006-01-02 15:04:05")))
 	}
