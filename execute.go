@@ -1,22 +1,27 @@
 package utils
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
 	"strings"
 )
 
-type IDB interface {
-	Rows() (*sql.Rows, error)
-	ScanRows(rows *sql.Rows, dest interface{}) error
+type ISqlRow interface {
+	Close() error
+	Next() bool
+	NextResultSet() bool
 }
 
-type IGormDB[T IDB] interface {
-	Rows() (*sql.Rows, error)
+type IDB[R ISqlRow] interface {
+	Rows() (R, error)
+	ScanRows(rows ISqlRow, dest interface{}) error
+}
+
+type IGormDB[R ISqlRow, T IDB[R]] interface {
+	Rows() (R, error)
 	Raw(sql string, values ...interface{}) T
-	ScanRows(rows *sql.Rows, dest interface{}) error
+	ScanRows(rows R, dest interface{}) error
 }
 
 var (
@@ -28,13 +33,13 @@ func SetIsDevelopment(isDev bool) {
 	isDevelopment = isDev
 }
 
-func Execute[T IDB](db IGormDB[T], controller string, action string, claims IClaims, request interface{}, result interface{}) error {
+func Execute[R ISqlRow, T IDB[R]](db IGormDB[R, T], controller string, action string, claims IClaims, request interface{}, result interface{}) error {
 	queryText := FindQueryWithinParamAndUser(controller, action, ToSqlScript(request, "Model", IGNORE_FIELDS...), claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
 	}
 
-	rows, queryError := any(db.Raw(queryText)).(IDB).Rows()
+	rows, queryError := any(db.Raw(queryText)).(IDB[R]).Rows()
 	if queryError != nil {
 		consoleError("Execute", controller, action, queryText, queryError)
 		return HandleSqlError(queryError)
@@ -50,13 +55,13 @@ func Execute[T IDB](db IGormDB[T], controller string, action string, claims ICla
 	return nil
 }
 
-func ExecuteId[T IDB](db IGormDB[T], controller string, action string, claims IClaims, id interface{}, result interface{}) error {
+func ExecuteId[R ISqlRow, T IDB[R]](db IGormDB[R, T], controller string, action string, claims IClaims, id interface{}, result interface{}) error {
 	queryText := FindQueryWithinUser(controller, action, claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
 	}
 
-	rows, queryError := any(db.Raw(queryText, id)).(IDB).Rows()
+	rows, queryError := any(db.Raw(queryText, id)).(IDB[R]).Rows()
 	if queryError != nil {
 		consoleError("ExecuteId", controller, action, queryText, queryError)
 		return HandleSqlError(queryError)
@@ -72,13 +77,13 @@ func ExecuteId[T IDB](db IGormDB[T], controller string, action string, claims IC
 	return nil
 }
 
-func ExecuteMultipleResult[T IDB](db IGormDB[T], controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
+func ExecuteMultipleResult[R ISqlRow, T IDB[R]](db IGormDB[R, T], controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
 	queryText := FindQueryWithinParamAndUser(controller, action, ToSqlScript(request, "Model", IGNORE_FIELDS...), claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
 	}
 
-	rows, queryError := any(db.Raw(queryText)).(IDB).Rows()
+	rows, queryError := any(db.Raw(queryText)).(IDB[R]).Rows()
 	if queryError != nil {
 		consoleError("ExecuteMultipleResult", controller, action, queryText, queryError)
 		return HandleSqlError(queryError)
@@ -99,13 +104,13 @@ func ExecuteMultipleResult[T IDB](db IGormDB[T], controller string, action strin
 	return errScan
 }
 
-func ExecuteIdMultipleResult[T IDB](db IGormDB[T], controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
+func ExecuteIdMultipleResult[R ISqlRow, T IDB[R]](db IGormDB[R, T], controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
 	queryText := FindQueryWithinUser(controller, action, claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
 	}
 
-	rows, queryError := any(db.Raw(queryText)).(IDB).Rows()
+	rows, queryError := any(db.Raw(queryText)).(IDB[R]).Rows()
 	if queryError != nil {
 		consoleError("ExecuteIdMultipleResult", controller, action, queryText, queryError)
 		return HandleSqlError(queryError)
@@ -126,7 +131,7 @@ func ExecuteIdMultipleResult[T IDB](db IGormDB[T], controller string, action str
 	return errScan
 }
 
-func FilterPagination[T IDB](db IGormDB[T], controller string, action string, claims IClaims, filters interface{}, paging interface{}, total interface{}, items interface{}) error {
+func FilterPagination[R ISqlRow, T IDB[R]](db IGormDB[R, T], controller string, action string, claims IClaims, filters interface{}, paging interface{}, total interface{}, items interface{}) error {
 	builder := strings.Builder{}
 	builder.WriteString(ToSqlScript(filters, "Filter", IGNORE_FIELDS...))
 	builder.WriteString("\n")
@@ -136,7 +141,7 @@ func FilterPagination[T IDB](db IGormDB[T], controller string, action string, cl
 		return errors.New("action_not_found")
 	}
 
-	rows, queryError := any(db.Raw(queryText)).(IDB).Rows()
+	rows, queryError := any(db.Raw(queryText)).(IDB[R]).Rows()
 	if queryError != nil {
 		consoleError("FilterPagination", controller, action, queryText, queryError)
 		return HandleSqlError(queryError)
@@ -184,7 +189,7 @@ func replaceClaims(input string, claims IClaims) string {
 	return input
 }
 
-func scanResults[T IDB](db IGormDB[T], rows *sql.Rows, results []interface{}) error {
+func scanResults[R ISqlRow, T IDB[R]](db IGormDB[R, T], rows R, results []interface{}) error {
 	for i, e := range results {
 		if i != 0 && !rows.Next() {
 			rows.NextResultSet()
