@@ -72,16 +72,15 @@ func objectToScriptData(builder *strings.Builder, write bool, values *[]string, 
 	indexFields := findFieldsUsedIndex(elemType, ignoreFields...)
 	for _, i := range indexFields {
 		fieldField := elemType.Field(i)
-		fieldValue := handleValuePointer(elem.Field(i))
-		fieldType := handleTypePointer(fieldField.Type)
-		fieldKind := fieldType.Kind()
+		fieldValue := elem.Field(i)
+		fieldKind := fieldValue.Kind()
 
-		if fieldKind == reflect.Array || fieldKind == reflect.Slice {
-			arrayToScriptData(result, true, ToInterfaceSlice(fieldValue), fieldField.Name, ignoreFields...)
-		} else if isStruct(fieldType) {
-			objectToScriptData(builder, false, values, fieldValue, fieldType, fieldField.Name, ignoreFields...)
+		if AnyContains(fieldKind, reflect.Array, reflect.Slice) {
+			arrayToScriptData(result, true, ToInterfaceSlice(fieldValue.Elem()), fieldField.Name, ignoreFields...)
+		} else if isStruct(handleTypePointer(fieldField.Type)) {
+			objectToScriptData(builder, false, values, fieldValue, fieldField.Type, fieldField.Name, ignoreFields...)
 		} else {
-			*values = append(*values, toSqlValue(fieldKind, fieldValue))
+			*values = append(*values, toSqlValue(fieldValue.Kind(), fieldValue))
 		}
 	}
 
@@ -216,8 +215,17 @@ func toOthersSqlType(modelType reflect.Type) string {
 
 // toSqlValue converts the given interface value to a SQL string representation of the corresponding type.
 func toSqlValue(kind reflect.Kind, value reflect.Value) string {
-	if !value.IsValid() || value.IsZero() {
+	if !value.IsValid() {
 		return "null"
+	}
+
+	if AnyContains(kind, reflect.Ptr, reflect.Pointer) {
+		if value.IsNil() || !value.Elem().IsValid() {
+			return "null"
+		}
+
+		value = value.Elem()
+		kind = value.Kind()
 	}
 
 	switch kind {
