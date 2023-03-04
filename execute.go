@@ -17,7 +17,7 @@ func SetIsDevelopment(isDev bool) {
 	isDevelopment = isDev
 }
 
-func Execute(db IGormDB, controller string, action string, claims IClaims, request interface{}, result interface{}) error {
+func Execute(db *sql.DB, controller string, action string, claims IClaims, request interface{}, result interface{}) error {
 	queryText := FindQueryWithinParamAndUser(controller, action, ToSqlScript(request, "Model", IGNORE_FIELDS...), claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
@@ -25,7 +25,7 @@ func Execute(db IGormDB, controller string, action string, claims IClaims, reque
 
 	consoleQuery("Execute", controller, action, queryText)
 
-	rows, queryError := db.Raw(queryText).Rows()
+	rows, queryError := db.Query(queryText)
 	if queryError != nil {
 		consoleError("Execute", controller, action, queryText, queryError)
 		return HandleSqlError(queryError)
@@ -39,7 +39,7 @@ func Execute(db IGormDB, controller string, action string, claims IClaims, reque
 	return nil
 }
 
-func ExecuteId(db IGormDB, controller string, action string, claims IClaims, id interface{}, result interface{}) error {
+func ExecuteId(db *sql.DB, controller string, action string, claims IClaims, id interface{}, result interface{}) error {
 	queryText := FindQueryWithinUser(controller, action, claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
@@ -47,7 +47,7 @@ func ExecuteId(db IGormDB, controller string, action string, claims IClaims, id 
 
 	consoleQuery("ExecuteId", controller, action, queryText)
 
-	rows, queryError := db.Raw(queryText).Rows()
+	rows, queryError := db.Query(queryText)
 	if queryError != nil {
 		consoleError("ExecuteId", controller, action, queryText, queryError)
 		return HandleSqlError(queryError)
@@ -61,7 +61,7 @@ func ExecuteId(db IGormDB, controller string, action string, claims IClaims, id 
 	return nil
 }
 
-func ExecuteMultipleResult(db IGormDB, controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
+func ExecuteMultipleResult(db *sql.DB, controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
 	queryText := FindQueryWithinParamAndUser(controller, action, ToSqlScript(request, "Model", IGNORE_FIELDS...), claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
@@ -69,7 +69,7 @@ func ExecuteMultipleResult(db IGormDB, controller string, action string, claims 
 
 	consoleQuery("ExecuteMultipleResult", controller, action, queryText)
 
-	rows, err := db.Raw(queryText).Rows()
+	rows, err := db.Query(queryText)
 	if err != nil {
 		consoleError("ExecuteMultipleResult", controller, action, queryText, err)
 		return HandleSqlError(err)
@@ -88,7 +88,7 @@ func ExecuteMultipleResult(db IGormDB, controller string, action string, claims 
 	return errScan
 }
 
-func ExecuteIdMultipleResult(db IGormDB, controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
+func ExecuteIdMultipleResult(db *sql.DB, controller string, action string, claims IClaims, request interface{}, results ...interface{}) error {
 	queryText := FindQueryWithinUser(controller, action, claims, replaceClaims)
 	if queryText == "" {
 		return errors.New("action_not_found")
@@ -96,7 +96,7 @@ func ExecuteIdMultipleResult(db IGormDB, controller string, action string, claim
 
 	consoleQuery("ExecuteIdMultipleResult", controller, action, queryText)
 
-	rows, err := db.Raw(queryText, request).Rows()
+	rows, err := db.Query(queryText)
 	if err != nil {
 		consoleError("ExecuteIdMultipleResult", controller, action, queryText, err)
 		return HandleSqlError(err)
@@ -115,7 +115,7 @@ func ExecuteIdMultipleResult(db IGormDB, controller string, action string, claim
 	return errScan
 }
 
-func FilterPagination(db IGormDB, controller string, action string, claims IClaims, filters interface{}, paging interface{}, total interface{}, items interface{}) error {
+func FilterPagination(db *sql.DB, controller string, action string, claims IClaims, filters interface{}, paging interface{}, total interface{}, items interface{}) error {
 	builder := strings.Builder{}
 	builder.WriteString(ToSqlScript(filters, "Filter", IGNORE_FIELDS...))
 	builder.WriteString("\n")
@@ -127,7 +127,7 @@ func FilterPagination(db IGormDB, controller string, action string, claims IClai
 
 	consoleQuery("FilterPagination", controller, action, queryText)
 
-	rows, err := db.Raw(queryText).Rows()
+	rows, err := db.Query(queryText)
 	if err != nil {
 		consoleError("FilterPagination", controller, action, queryText, err)
 		return HandleSqlError(err)
