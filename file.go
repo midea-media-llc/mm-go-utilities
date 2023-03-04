@@ -3,11 +3,16 @@ package utils
 import (
 	"fmt"
 	"reflect"
-
-	"github.com/360EntSecGroup-Skylar/excelize"
 )
 
 var MAP_EXCEL_COLUMN_INDEX = map[int]string{1: "A", 2: "B", 3: "C", 4: "D", 5: "E", 6: "F", 7: "G", 8: "H", 9: "I", 10: "J", 11: "K", 12: "L", 13: "M", 14: "N", 15: "O", 16: "P", 17: "Q", 18: "R", 19: "S", 20: "T", 21: "U", 22: "V", 23: "W", 24: "X", 25: "Y", 26: "Z"}
+
+type IExcel interface {
+	SaveAs(name string) error
+	SetSheetName(oldName, newName string)
+	SetCellValue(sheet, axis string, value interface{})
+	SetCellStyle(sheet, hcell, vcell string, styleID int)
+}
 
 type ExportFieldConfig struct {
 	Name   string
@@ -19,15 +24,14 @@ type ExportFieldConfig struct {
 // If headers are specified, they are added as the first row of the sheet.
 // The data is written starting at the second row of the sheet.
 // The data is expected to be a slice of structs.
-func WriteArrayToFileXlsx(value interface{}, fileName *string, sheetName string, headers ...string) error {
-	fileExcel := excelize.NewFile()
-	fileExcel.SetSheetName("Sheet1", sheetName)
+func WriteArrayToFileXlsx(f IExcel, value interface{}, fileName *string, sheetName string, headers ...string) error {
+	f.SetSheetName("Sheet1", sheetName)
 	arrs := ToInterfaceSlice(reflect.ValueOf(value))
 
 	countMore := 1
 	if len(headers) > 0 {
 		for i, item := range headers {
-			fileExcel.SetCellValue(sheetName, fmt.Sprintf("%s%v", MAP_EXCEL_COLUMN_INDEX[i+1], 1), item)
+			f.SetCellValue(sheetName, fmt.Sprintf("%s%v", MAP_EXCEL_COLUMN_INDEX[i+1], 1), item)
 		}
 		countMore = 2
 	}
@@ -36,12 +40,11 @@ func WriteArrayToFileXlsx(value interface{}, fileName *string, sheetName string,
 		v := reflect.ValueOf(item)
 
 		for j := 0; j < v.NumField(); j++ {
-			fileExcel.SetCellValue(sheetName, fmt.Sprintf("%s%v", MAP_EXCEL_COLUMN_INDEX[j+1], i+countMore), v.Field(j))
+			f.SetCellValue(sheetName, fmt.Sprintf("%s%v", MAP_EXCEL_COLUMN_INDEX[j+1], i+countMore), v.Field(j))
 		}
 	}
 
-	*fileName = fmt.Sprintf("%v.xlsx", *fileName)
-	return fileExcel.SaveAs(*fileName)
+	return f.SaveAs(fmt.Sprintf("%v.xlsx", *fileName))
 }
 
 // WriteDataIntoFile writes the data contained in a slice of structs to an xlsx file.
@@ -49,7 +52,7 @@ func WriteArrayToFileXlsx(value interface{}, fileName *string, sheetName string,
 // The data is written starting at the specified startRow and startColumn.
 // The style is used to style the entire range of the data (excluding headers).
 // The handleCellValue function is called for each cell in the data range and should return the cell value.
-func WriteDataIntoFile[T any](header []ExportFieldConfig, f *excelize.File, sheetName string, startRow, startColumn int, data []T, style int, handleCellValue func(string, T, reflect.Value) interface{}) {
+func WriteDataIntoFile[T any](header []ExportFieldConfig, f IExcel, sheetName string, startRow, startColumn int, data []T, style int, handleCellValue func(string, T, reflect.Value) interface{}) {
 	// render header
 	index := startColumn
 	for _, e := range header {

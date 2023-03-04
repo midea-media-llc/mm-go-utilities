@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"strings"
 	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ToSqlScript converts a struct or slice of structs to a SQL script that can be used to declare and insert data
@@ -259,7 +257,7 @@ func toValueStruct(value reflect.Value) string {
 	}
 
 	if value.Type() == TYPE_TIMESTAMP {
-		return fmt.Sprintf("'%s'", Safe(TimeStampToTime(value.Interface().(timestamppb.Timestamp)).Format("2006-01-02 15:04:05")))
+		return fmt.Sprintf("'%s'", Safe(TimeStampToTime(value.Interface().(ITimestamp)).Format("2006-01-02 15:04:05")))
 	}
 
 	return "null"

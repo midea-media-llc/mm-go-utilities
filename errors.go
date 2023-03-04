@@ -4,9 +4,12 @@ import (
 	"errors"
 	"reflect"
 
-	mssql "github.com/denisenkom/go-mssqldb"
 	"google.golang.org/grpc/status"
 )
+
+type ISqlError interface {
+	SQLErrorMessage() string
+}
 
 // HandleSqlError handles SQL errors by returning a new error object that contains the SQL error message.
 // If the provided error is not of type mssql.Error, the function simply returns the original error.
@@ -15,7 +18,7 @@ func HandleSqlError(err error) error {
 		return err
 	}
 
-	e := err.(mssql.Error)
+	e := err.(ISqlError)
 	return errors.New(e.SQLErrorMessage())
 }
 

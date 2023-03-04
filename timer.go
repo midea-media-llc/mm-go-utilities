@@ -8,6 +8,10 @@ import (
 
 const longTimeFormat = "2006-01-02T15:04:05.999Z"
 
+type ITimestamp interface {
+	AsTime() time.Time
+}
+
 // ToLongTime converts a time.Time value to a string in long time format
 func ToLongTime(value *time.Time) string {
 	if value == nil {
@@ -27,12 +31,12 @@ func ToFormat(value *time.Time, format string) string {
 }
 
 // TimeStampToTime converts a timestamppb.Timestamp value to a time.Time value
-func TimeStampToTime(timestamp timestamppb.Timestamp) time.Time {
+func TimeStampToTime(timestamp ITimestamp) time.Time {
 	return timestamp.AsTime()
 }
 
 // TimeStampToTimePointer converts a pointer to timestamppb.Timestamp value to a pointer to time.Time value
-func TimeStampToTimePointer(timestamp *timestamppb.Timestamp) *time.Time {
+func TimeStampToTimePointer(timestamp ITimestamp) *time.Time {
 	if timestamp == nil {
 		return nil
 	}
@@ -52,5 +56,6 @@ func TimeToTimeStampPointer(value *time.Time) *timestamppb.Timestamp {
 		return nil
 	}
 
-	return timestamppb.New(*value)
+	result := TimeToTimeStamp(*value)
+	return &result
 }

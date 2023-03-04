@@ -2,10 +2,6 @@ package utils
 
 import (
 	"reflect"
-	"time"
-
-	mssql "github.com/denisenkom/go-mssqldb"
-	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
 const (
@@ -23,12 +19,12 @@ var TYPE_GUID reflect.Type = nil
 var TYPE_GUID_POINTER reflect.Type = nil
 var TYPE_SQL_ERROR reflect.Type = nil
 
-func init() {
-	TYPE_TIME = reflect.TypeOf(time.Time{})
-	TYPE_TIME_POINTER = reflect.TypeOf(&time.Time{})
-	TYPE_TIMESTAMP = reflect.TypeOf(timestamp.Timestamp{})
-	TYPE_TIMESTAMP_POINTER = reflect.TypeOf(&timestamp.Timestamp{})
-	TYPE_SQL_ERROR = reflect.TypeOf(mssql.Error{})
-	TYPE_GUID = reflect.TypeOf(mssql.UniqueIdentifier{})
-	TYPE_GUID_POINTER = reflect.TypeOf(&mssql.UniqueIdentifier{})
+func SetType(time reflect.Type, timePtr reflect.Type, stamp reflect.Type, stampPtr reflect.Type, sqlError reflect.Type, uuid reflect.Type, uuidPtr reflect.Type) {
+	TYPE_TIME = time
+	TYPE_TIME_POINTER = timePtr
+	TYPE_TIMESTAMP = stamp
+	TYPE_TIMESTAMP_POINTER = stampPtr
+	TYPE_SQL_ERROR = sqlError
+	TYPE_GUID = uuid
+	TYPE_GUID_POINTER = uuidPtr
 }
