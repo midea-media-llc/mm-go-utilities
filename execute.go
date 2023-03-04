@@ -48,7 +48,7 @@ func Execute[R, T any](db IGormDB[R, T], controller string, action string, claim
 	consoleQuery("Execute", controller, action, queryText)
 
 	defer any(rows).(ISqlRow).Close()
-	if errScan := db.ScanRows(rows, result); errScan != nil {
+	if errScan := scanResults(db, rows, result); errScan != nil {
 		consoleError("Execute", controller, action, queryText, errScan)
 		return HandleSqlError(errScan)
 	}
@@ -71,7 +71,7 @@ func ExecuteId[R ISqlRow, T any](db IGormDB[R, T], controller string, action str
 	consoleQuery("ExecuteId", controller, action, queryText)
 
 	defer any(rows).(ISqlRow).Close()
-	if errScan := db.ScanRows(rows, result); errScan != nil {
+	if errScan := scanResults(db, rows, result); errScan != nil {
 		consoleError("ExecuteId", controller, action, queryText, errScan)
 		return HandleSqlError(errScan)
 	}
