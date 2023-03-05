@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"strings"
 	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ToSqlScript converts a struct or slice of structs to a SQL script that can be used to declare and insert data
@@ -75,7 +73,7 @@ func objectToScriptData(builder *strings.Builder, write bool, values *[]string, 
 		fieldValue := elem.Field(i)
 		fieldKind := fieldValue.Kind()
 
-		if AnyContains(fieldKind, reflect.Array, reflect.Slice) {
+		if ComparableContains(fieldKind, reflect.Array, reflect.Slice) {
 			arrayToScriptData(result, ToInterfaceSlice(fieldValue), fieldField.Name, ignoreFields...)
 		} else if isStruct(handleTypePointer(fieldField.Type)) {
 			objectToScriptData(builder, false, values, fieldValue, fieldField.Type, fieldField.Name, ignoreFields...)
@@ -135,7 +133,7 @@ func handlePointer(value interface{}) (reflect.Value, reflect.Type, reflect.Kind
 
 // handleTypePointer returns the type pointed to by a pointer type, or the original type if it is not a pointer.
 func handleTypePointer(pointerType reflect.Type) reflect.Type {
-	if AnyContains(pointerType.Kind(), reflect.Ptr, reflect.Pointer) {
+	if ComparableContains(pointerType.Kind(), reflect.Ptr, reflect.Pointer) {
 		return pointerType.Elem()
 	}
 	return pointerType
@@ -143,7 +141,7 @@ func handleTypePointer(pointerType reflect.Type) reflect.Type {
 
 // handleValuePointer returns the value pointed to by a pointer value, or the original value if it is not a pointer.
 func handleValuePointer(pointerValue reflect.Value) reflect.Value {
-	if AnyContains(pointerValue.Kind(), reflect.Ptr, reflect.Pointer) {
+	if ComparableContains(pointerValue.Kind(), reflect.Ptr, reflect.Pointer) {
 		return pointerValue.Elem()
 	}
 	return pointerValue
@@ -174,7 +172,7 @@ func isStruct(fieldType reflect.Type) bool {
 		return false
 	}
 
-	return !AnyContains(fieldType, TYPE_TIME, TYPE_TIMESTAMP, TYPE_TIME_POINTER, TYPE_TIMESTAMP_POINTER, TYPE_GUID, TYPE_GUID_POINTER)
+	return !ComparableContains(fieldType, TYPE_TIME, TYPE_TIMESTAMP, TYPE_TIME_POINTER, TYPE_TIMESTAMP_POINTER, TYPE_GUID, TYPE_GUID_POINTER)
 }
 
 // findSqlTypeByType determines the SQL data type that should be used for a given Go data type.
@@ -202,11 +200,11 @@ func findSqlTypeByType(modelType reflect.Type) string {
 
 // toOthersSqlType returns the corresponding SQL type for a given Go type
 func toOthersSqlType(modelType reflect.Type) string {
-	if AnyContains(modelType, TYPE_TIME, TYPE_TIME_POINTER, TYPE_TIMESTAMP, TYPE_TIMESTAMP_POINTER) {
+	if ComparableContains(modelType, TYPE_TIME, TYPE_TIME_POINTER, TYPE_TIMESTAMP, TYPE_TIMESTAMP_POINTER) {
 		return "datetime"
 	}
 
-	if AnyContains(modelType, TYPE_GUID, TYPE_GUID_POINTER) {
+	if ComparableContains(modelType, TYPE_GUID, TYPE_GUID_POINTER) {
 		return "uniqueidentifier"
 	}
 
@@ -219,7 +217,7 @@ func toSqlValue(kind reflect.Kind, value reflect.Value) string {
 		return "null"
 	}
 
-	if AnyContains(kind, reflect.Ptr, reflect.Pointer) {
+	if ComparableContains(kind, reflect.Ptr, reflect.Pointer) {
 		if value.IsNil() || !value.Elem().IsValid() {
 			return "null"
 		}
@@ -259,7 +257,7 @@ func toValueStruct(value reflect.Value) string {
 	}
 
 	if value.Type() == TYPE_TIMESTAMP {
-		return fmt.Sprintf("'%s'", Safe(TimeStampToTime(value.Interface().(timestamppb.Timestamp)).Format("2006-01-02 15:04:05")))
+		return fmt.Sprintf("'%s'", Safe(TimeStampToTime(value.Interface().(ITimestamp)).Format("2006-01-02 15:04:05")))
 	}
 
 	return "null"
