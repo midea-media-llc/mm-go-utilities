@@ -24,7 +24,7 @@ func ToSqlScript(value interface{}, tableName string, ignoreFields ...string) st
 	rfValue, rfType, rfKind := handlePointer(value)
 	if rfKind == reflect.Array || rfKind == reflect.Slice {
 		objectToScriptDeclare(result, true, &[]string{}, rfType.Elem(), tableName, ignoreFields...)
-		arrayToScriptData(result, true, ToInterfaceSlice(rfValue), tableName, ignoreFields...)
+		arrayToScriptData(result, ToInterfaceSlice(rfValue), tableName, ignoreFields...)
 	} else {
 		objectToScriptDeclare(result, true, &[]string{}, rfType, tableName, ignoreFields...)
 		objectToScriptData(result, true, &[]string{}, rfValue, rfType, tableName, ignoreFields...)
@@ -76,7 +76,7 @@ func objectToScriptData(builder *strings.Builder, write bool, values *[]string, 
 		fieldKind := fieldValue.Kind()
 
 		if AnyContains(fieldKind, reflect.Array, reflect.Slice) {
-			arrayToScriptData(result, true, ToInterfaceSlice(fieldValue.Elem()), fieldField.Name, ignoreFields...)
+			arrayToScriptData(result, ToInterfaceSlice(fieldValue), fieldField.Name, ignoreFields...)
 		} else if isStruct(handleTypePointer(fieldField.Type)) {
 			objectToScriptData(builder, false, values, fieldValue, fieldField.Type, fieldField.Name, ignoreFields...)
 		} else {
@@ -93,13 +93,13 @@ func objectToScriptData(builder *strings.Builder, write bool, values *[]string, 
 
 // arrayToScriptData takes a slice of interface{} values, a table name, and an optional list of field names to ignore.
 // It returns a string containing a SQL script to insert the data into a table.
-func arrayToScriptData(builder *strings.Builder, write bool, values []interface{}, tableName string, ignoreFields ...string) {
+func arrayToScriptData(builder *strings.Builder, values []interface{}, tableName string, ignoreFields ...string) {
 	result := &strings.Builder{}
 
-	datas := make([]string, 0)
 	for _, item := range values {
 		value, valueType, _ := handlePointer(item)
-		objectToScriptData(result, write, &datas, value, valueType, tableName, ignoreFields...)
+		datas := make([]string, 0)
+		objectToScriptData(result, true, &datas, value, valueType, tableName, ignoreFields...)
 	}
 
 	builder.WriteString(result.String())
