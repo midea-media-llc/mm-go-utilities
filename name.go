@@ -11,7 +11,7 @@ type FindNameModel[T comparable] struct {
 }
 
 func FindNames[T comparable](claims IClaims, models ...*FindNameModel[T]) {
-	callBacks := Select(models, func(model *FindNameModel[T]) func() {
+	callBacks := Select(models, func(model *FindNameModel[T]) Function {
 		return func() {
 			if model == nil || model.Id == nil {
 				return
@@ -21,5 +21,5 @@ func FindNames[T comparable](claims IClaims, models ...*FindNameModel[T]) {
 		}
 	})
 
-	RunSync(callBacks...)
+	RunFuncThreads(callBacks, len(callBacks))
 }
