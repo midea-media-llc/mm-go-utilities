@@ -11,7 +11,7 @@ func RunSync(callBacks ...func()) {
 }
 
 func RunChannel(callBacks ...func()) {
-	chanel := make(chan int)
+	chanel := make(chan int, len(callBacks))
 	for i, e := range callBacks {
 		go callBackChanel(e, i, chanel)
 	}
