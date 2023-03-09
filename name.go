@@ -21,5 +21,5 @@ func FindNames[T comparable](claims IClaims, models ...*FindNameModel[T]) {
 		}
 	})
 
-	RunChannel(callBacks...)
+	RunSync(callBacks...)
 }
