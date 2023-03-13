@@ -30,7 +30,7 @@ func CloneFields[IN comparable, OUT comparable](input IN, output OUT, ignoreFiel
 			switch destField.Type {
 			case TYPE_TIME:
 				// If the type is time.Time, convert the input value to time.Time and set it to the output field
-				value := reflect.ValueOf(TimeStampToTime((srcFieldValue.Interface()).(ITimestamp)))
+				value := reflect.ValueOf(TimeStampToTime((srcFieldValue.Interface()).(timestamppb.Timestamp)))
 				destValue.FieldByName(name).Set(value)
 			case TYPE_TIME_POINTER:
 				// If the type is *time.Time, convert the input value to *time.Time and set it to the output field
