@@ -20,19 +20,15 @@ func (e *NameItem[T]) GetName() *string {
 
 type IName[T comparable] interface {
 	InternalFindItemName(id T, claims IClaims) INameItem[T]
-}
-
-type INames[T comparable] interface {
 	InternalFindItemNameByListID(ids []*T, claims IClaims) []INameItem[T]
 }
 
 type FindNameModel[T comparable] struct {
-	Id           *T
-	Id2          []*T
-	Module       IName[T]
-	Module2      INames[T]
-	OnCompleted  func(INameItem[T])
-	OnCompleted2 func([]INameItem[T])
+	Id               *T
+	Ids              []*T
+	OnCompleted      func(INameItem[T])
+	OnCompletedSlice func([]INameItem[T])
+	Module           IName[T]
 }
 
 func FindNames[T comparable](claims IClaims, models ...*FindNameModel[T]) {
@@ -47,9 +43,9 @@ func FindNames[T comparable](claims IClaims, models ...*FindNameModel[T]) {
 				model.OnCompleted(result)
 			}
 
-			if model.Id2 != nil {
-				results := model.Module2.InternalFindItemNameByListID(model.Id2, claims)
-				model.OnCompleted2(results)
+			if model.Ids != nil {
+				results := model.Module.InternalFindItemNameByListID(model.Ids, claims)
+				model.OnCompletedSlice(results)
 			}
 		}
 	})
