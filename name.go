@@ -31,7 +31,7 @@ type FindNameModel[T comparable] struct {
 	Module           IName[T]
 }
 
-func FindNames[T comparable](claims IClaims, models ...*FindNameModel[T]) {
+func FindName[T comparable](claims IClaims, models ...*FindNameModel[T]) {
 	callBacks := Select(models, func(model *FindNameModel[T]) Function {
 		return func() {
 			if model == nil {
@@ -51,4 +51,16 @@ func FindNames[T comparable](claims IClaims, models ...*FindNameModel[T]) {
 	})
 
 	RunFuncThreads(callBacks, len(callBacks))
+}
+
+func FindNames[T comparable](claims IClaims, modules []IName[T], ids [][]*T, completeds []func([]INameItem[T])) {
+	models := make([]*FindNameModel[T], len(modules))
+	for i := 0; i < len(modules); i++ {
+		models[i] = &FindNameModel[T]{
+			Module:           modules[i],
+			Ids:              ids[i],
+			OnCompletedSlice: completeds[i],
+		}
+	}
+	FindName(claims, models...)
 }
