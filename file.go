@@ -5,6 +5,11 @@ import (
 	"reflect"
 )
 
+const (
+	DEFAULT_HEADER_STYLE = `{"font":{"size":12}, "alignment":{"horizontal":"center", "vertical":"center","wrap_text":true}, "border":[{"type":"left","color":"000000","style":1},{"type":"top","color":"000000","style":1},{"type":"bottom","color":"000000","style":1},{"type":"right","color":"000000","style":1}]}`
+	DEFAULT_VALUE_STYLE  = `{"font":{"size":12}, "alignment":{"horizontal":"center", "vertical":"center","wrap_text":true}, "border":[{"type":"left","color":"000000","style":1},{"type":"top","color":"000000","style":1},{"type":"bottom","color":"000000","style":1},{"type":"right","color":"000000","style":1}]}`
+)
+
 var MAP_EXCEL_COLUMN_INDEX = map[int]string{
 	1: "A", 2: "B", 3: "C", 4: "D", 5: "E", 6: "F", 7: "G", 8: "H", 9: "I", 10: "J",
 	11: "K", 12: "L", 13: "M", 14: "N", 15: "O", 16: "P", 17: "Q", 18: "R", 19: "S",
@@ -46,13 +51,14 @@ var MAP_EXCEL_COLUMN_INDEX = map[int]string{
 type IExcel interface {
 	SaveAs(name string) error
 	SetSheetName(oldName, newName string)
+	NewStyle(style string) (int, error)
 	SetCellValue(sheet, axis string, value interface{})
 	SetCellStyle(sheet, hcell, vcell string, styleID int)
 }
 
-type ExportFieldConfig struct {
-	Name   string
-	Header string
+type IExportField interface {
+	GetName() string
+	GetHeader() string
 }
 
 // WriteArrayToFileXlsx writes the data contained in a slice to an xlsx file.
@@ -89,13 +95,16 @@ func WriteArrayToFileXlsx(f IExcel, value interface{}, fileName *string, sheetNa
 // The data is written starting at the specified startRow and startColumn.
 // The style is used to style the entire range of the data (excluding headers).
 // The handleCellValue function is called for each cell in the data range and should return the cell value.
-func WriteDataIntoFile[T any](header []ExportFieldConfig, f IExcel, sheetName string, startRow, startColumn int, data []T, style int, handleCellValue func(string, T, reflect.Value) interface{}) {
+func WriteDataIntoFile[T any](header []IExportField, f IExcel, sheetName string, startRow, startColumn int, data []T, handleCellValue func(string, T, reflect.Value) interface{}) {
+	headerStyle, _ := f.NewStyle(DEFAULT_HEADER_STYLE)
+	cellStyle, _ := f.NewStyle(DEFAULT_HEADER_STYLE)
+
 	// render header
 	index := startColumn
 	for _, e := range header {
 		columnIndex := MAP_EXCEL_COLUMN_INDEX[index]
-		f.SetCellValue(sheetName, fmt.Sprintf("%v%d", columnIndex, startRow), e.Header)
-		f.SetCellStyle(sheetName, fmt.Sprintf("%v%d", columnIndex, startRow), fmt.Sprintf("%v%v", columnIndex, len(data)+startRow), style)
+		f.SetCellValue(sheetName, fmt.Sprintf("%s%d", columnIndex, startRow), e.GetHeader())
+		f.SetCellStyle(sheetName, fmt.Sprintf("%s%d", columnIndex, startRow), fmt.Sprintf("%v%v", columnIndex, len(data)+startRow), headerStyle)
 		index++
 	}
 
@@ -105,10 +114,11 @@ func WriteDataIntoFile[T any](header []ExportFieldConfig, f IExcel, sheetName st
 		index = startColumn
 		dataValue := reflect.ValueOf(item).Elem()
 		for _, e := range header {
-			rValue := dataValue.FieldByName(e.Name)
-			value := handleCellValue(e.Name, item, rValue)
+			rValue := dataValue.FieldByName(e.GetName())
+			value := handleCellValue(e.GetName(), item, rValue)
 			columnIndex := MAP_EXCEL_COLUMN_INDEX[index]
 			f.SetCellValue(sheetName, fmt.Sprintf("%s%d", columnIndex, startRow), value)
+			f.SetCellStyle(sheetName, fmt.Sprintf("%s%d", columnIndex, startRow), fmt.Sprintf("%v%v", columnIndex, len(data)+startRow), cellStyle)
 			index++
 		}
 		startRow++
