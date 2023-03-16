@@ -105,7 +105,8 @@ func WriteDataIntoFile[T any](header []ExportFieldConfig, f IExcel, sheetName st
 		index = startColumn
 		dataValue := reflect.ValueOf(item).Elem()
 		for _, e := range header {
-			value := handleCellValue(e.Name, item, dataValue.FieldByName(e.Name))
+			rValue := dataValue.FieldByName(e.Name)
+			value := handleCellValue(e.Name, item, rValue)
 			columnIndex := MAP_EXCEL_COLUMN_INDEX[index]
 			f.SetCellValue(sheetName, fmt.Sprintf("%s%d", columnIndex, startRow), value)
 			index++
