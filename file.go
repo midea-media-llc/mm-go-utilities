@@ -134,6 +134,15 @@ func WriteDataIntoFile[T any](f IExcel, fields []IExportField, sheetName string,
 	}
 }
 
+// ExportXlsx is a generic function that exports data to an Excel file.
+// It accepts an IExcel interface for writing to Excel, a slice of IExportField
+// that specifies the fields to export, a sheetName string, startRow and startColumn integers,
+// a slice of data of type T, a handleCellValue function that formats cell values, and a prefix string for the file name.
+// The function writes the data to the specified sheet in the Excel file, saves the file, and returns the file bytes, file name and error (if any).
+// If the specified sheetName does not exist in the Excel file, a new sheet with the specified name is created.
+// The function also sets the column width of the sheet based on the number of fields.
+// The handleCellValue function is called for each cell in the exported data and can be used to format the cell value.
+// The prefix string is used to generate a unique file name for the exported file.
 func ExportXlsx[T any](f IExcel, fields []IExportField, sheetName string, startRow, startColumn int, data []T, handleCellValue func(string, T, reflect.Value) interface{}, prefix string) ([]byte, string, error) {
 	if f.GetSheetIndex(sheetName) == 0 {
 		f.SetSheetName("Sheet1", sheetName)
