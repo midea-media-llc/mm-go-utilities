@@ -60,6 +60,20 @@ func Select[T any, V any](sources []T, predicate func(T) V) []V {
 	return result
 }
 
+// Select applies the given predicate function to each element in the input slice,
+// and returns a new slice containing the results of the predicate function applied to each element.
+func SelectIndex[T any, V any](sources []T, predicate func(int, T) V) []V {
+	// Create a new slice to hold the result of the predicate function.
+	result := make([]V, len(sources))
+	// Iterate over each element in the input slice.
+	for i, e := range sources {
+		// Apply the predicate function to the current element, and store the result in the result slice.
+		result[i] = predicate(i, e)
+	}
+	// Return the result slice.
+	return result
+}
+
 // Where filters the input slice by applying the given conditional function to each element,
 // and returns a new slice containing only the elements for which the conditional function returns true.
 func Where[T any](sources []T, conditional func(T) bool) []T {

@@ -108,28 +108,29 @@ func WriteDataIntoFile[T any](f IExcel, fields []IExportField, sheetName string,
 	cellStyle, _ := f.NewStyle(DEFAULT_VALUE_STYLE)
 
 	// render header
-	index := startColumn
-	for _, e := range fields {
-		columnIndex := MAP_EXCEL_COLUMN_INDEX[index]
-		f.SetCellValue(sheetName, fmt.Sprintf("%s%d", columnIndex, startRow), e.GetHeader())
-		f.SetCellStyle(sheetName, fmt.Sprintf("%s%d", columnIndex, startRow), fmt.Sprintf("%v%v", columnIndex, startRow), headerStyle)
+	for i, e := range fields {
+		columnIndex := MAP_EXCEL_COLUMN_INDEX[startColumn+i]
+		cellIndex := fmt.Sprintf("%s%d", columnIndex, startRow)
 
-		index++
+		f.SetCellValue(sheetName, cellIndex, e.GetHeader())
+		f.SetCellStyle(sheetName, cellIndex, cellIndex, headerStyle)
 	}
 
 	startRow++
+
 	// render data
-	for _, item := range data {
-		index = startColumn
-		for _, e := range fields {
-			value := handleCellValue(e.GetName(), item)
-			columnIndex := MAP_EXCEL_COLUMN_INDEX[index]
-			f.SetCellValue(sheetName, fmt.Sprintf("%s%d", columnIndex, startRow), value)
-			f.SetCellStyle(sheetName, fmt.Sprintf("%s%d", columnIndex, startRow), fmt.Sprintf("%v%v", columnIndex, startRow), cellStyle)
-			index++
+	RunValueIndexThreads(data, 100, func(v IThreadIndex[T]) error {
+		currentRow := startRow + v.GetIndex()
+		for i, e := range fields {
+			columnIndex := MAP_EXCEL_COLUMN_INDEX[startColumn+i]
+			cellIndex := fmt.Sprintf("%s%d", columnIndex, currentRow)
+
+			value := handleCellValue(e.GetName(), v.GetData())
+			f.SetCellValue(sheetName, cellIndex, value)
+			f.SetCellStyle(sheetName, cellIndex, cellIndex, cellStyle)
 		}
-		startRow++
-	}
+		return nil
+	})
 }
 
 // ExportXlsx is a generic function that exports data to an Excel file.
