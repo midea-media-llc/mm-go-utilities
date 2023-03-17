@@ -69,35 +69,6 @@ type IExportField interface {
 	GetHeader() string
 }
 
-// WriteArrayToFileXlsx writes the data contained in a slice to an xlsx file.
-// The name of the file and the name of the sheet are specified in the arguments.
-// If headers are specified, they are added as the first row of the sheet.
-// The data is written starting at the second row of the sheet.
-// The data is expected to be a slice of structs.
-func WriteArrayToFileXlsx(f IExcel, value interface{}, fileName *string, sheetName string, headers ...string) error {
-	f.SetSheetName("Sheet1", sheetName)
-	arrs := ToInterfaceSlice(reflect.ValueOf(value))
-
-	countMore := 1
-	if len(headers) > 0 {
-		for i, item := range headers {
-			f.SetCellValue(sheetName, fmt.Sprintf("%s%v", MAP_EXCEL_COLUMN_INDEX[i+1], 1), item)
-		}
-		countMore = 2
-	}
-
-	for i, item := range arrs {
-		v := reflect.ValueOf(item)
-
-		for j := 0; j < v.NumField(); j++ {
-			f.SetCellValue(sheetName, fmt.Sprintf("%s%v", MAP_EXCEL_COLUMN_INDEX[j+1], i+countMore), v.Field(j))
-		}
-	}
-
-	*fileName = fmt.Sprintf("%v.xlsx", *fileName)
-	return f.SaveAs(*fileName)
-}
-
 // WriteDataIntoFile writes the data contained in a slice of structs to an xlsx file.
 // The headers are specified in the header argument.
 // The data is written starting at the specified startRow and startColumn.
@@ -125,9 +96,19 @@ func WriteDataIntoFile[T any](f IExcel, fields []IExportField, sheetName string,
 			columnIndex := MAP_EXCEL_COLUMN_INDEX[startColumn+i]
 			cellIndex := fmt.Sprintf("%s%d", columnIndex, currentRow)
 
-			value := handleCellValue(e.GetName(), v.GetData())
-			f.SetCellValue(sheetName, cellIndex, value)
 			f.SetCellStyle(sheetName, cellIndex, cellIndex, cellStyle)
+
+			value := handleCellValue(e.GetName(), v.GetData())
+			rValue := reflect.ValueOf(value)
+			if rValue.Kind() == reflect.Ptr {
+				rValue = rValue.Elem()
+			}
+
+			if !rValue.IsValid() {
+				continue
+			}
+
+			f.SetCellValue(sheetName, cellIndex, rValue.Interface())
 		}
 		return nil
 	})
