@@ -89,14 +89,19 @@ func WriteDataIntoFile[T any](f IExcel, fields []IExportField, sheetName string,
 
 	startRow++
 
+	// default style for all cell
+	hFromCell := MAP_EXCEL_COLUMN_INDEX[startColumn]
+	hEndCell := MAP_EXCEL_COLUMN_INDEX[startColumn+len(fields)-1]
+	hCell := fmt.Sprintf("%s%d", hFromCell, startRow)
+	vCell := fmt.Sprintf("%s%d", hEndCell, startRow+len(data)-1)
+	f.SetCellStyle(sheetName, hCell, vCell, cellStyle)
+
 	// render data
 	RunValueIndexThreads(data, 100, func(v IThreadIndex[T]) error {
 		currentRow := startRow + v.GetIndex()
 		for i, e := range fields {
 			columnIndex := MAP_EXCEL_COLUMN_INDEX[startColumn+i]
 			cellIndex := fmt.Sprintf("%s%d", columnIndex, currentRow)
-
-			f.SetCellStyle(sheetName, cellIndex, cellIndex, cellStyle)
 
 			value := handleCellValue(e.GetName(), v.GetData())
 			rValue := reflect.ValueOf(value)
