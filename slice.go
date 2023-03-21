@@ -143,6 +143,21 @@ func ToInterfaceSlice(s reflect.Value) []interface{} {
 	return result
 }
 
+// Distinct takes a slice of pointers to comparable values of type T
+// and returns a new slice with distinct elements.
+func Distinct[T comparable](sources []*T) []*T {
+	keys := make(map[T]bool)
+	result := []*T{}
+	for _, e := range sources {
+		if !keys[*e] {
+			keys[*e] = true
+			result = append(result, e)
+		}
+	}
+	return result
+}
+
+// RemoveAt remove an element
 func RemoveAt[T any](sources []T, index int) []T {
 	var def T
 	copy(sources[index:], sources[index+1:])
