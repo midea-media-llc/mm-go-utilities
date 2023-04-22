@@ -125,7 +125,7 @@ func ExecuteIdMultipleResult[R, T any](db IGormDB[R, T], controller string, acti
 	return errScan
 }
 
-func FilterPagination[R, T any](db IGormDB[R, T], controller string, action string, claims IClaims, filters interface{}, paging interface{}, total interface{}, items interface{}) error {
+func FilterPagination[R, T any](db IGormDB[R, T], controller string, action string, claims IClaims, filters interface{}, paging interface{}, results ...interface{}) error {
 	builder := strings.Builder{}
 	builder.WriteString(ToSqlScript(filters, "Filter", IGNORE_FIELDS...))
 	builder.WriteString("\n")
@@ -144,7 +144,7 @@ func FilterPagination[R, T any](db IGormDB[R, T], controller string, action stri
 	consoleQuery("FilterPagination", controller, action, queryText)
 
 	defer any(rows).(ISqlRow).Close()
-	errScan := scanResults(db, rows, total, items)
+	errScan := scanResults(db, rows, results...)
 	if errScan != nil {
 		consoleError("ExecuteIdMultipleResult", controller, action, queryText, errScan)
 	}
