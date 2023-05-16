@@ -3,11 +3,13 @@ package utils
 type INameItem[T comparable] interface {
 	GetId() T
 	GetName() *string
+	GetCode() *string
 }
 
 type NameItem[T any] struct {
 	Id   T
 	Name *string
+	Code *string
 }
 
 func (e *NameItem[T]) GetId() T {
@@ -16,6 +18,10 @@ func (e *NameItem[T]) GetId() T {
 
 func (e *NameItem[T]) GetName() *string {
 	return e.Name
+}
+
+func (e *NameItem[T]) GetCode() *string {
+	return e.Code
 }
 
 type IName[T comparable] interface {
